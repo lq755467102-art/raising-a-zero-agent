@@ -1,33 +1,27 @@
 # failclosed-toolkit
 
-> 让 **AI 协作 / 无人值守自动化 / 多人协作**不「静默出错」的工具箱 + 方法论。
+> 一个人 + 一个 agent，从零做出一套无人值守的系统；
+> 顺手把「怎么让系统不出静默错」沉淀成了工具与方法论。
 
 `零依赖` · `纯标准库` · `Python 3.8+` · `34 项单测 + 67 项自测`
 
 ---
 
-## 30 秒速览
+## 这是什么
 
-**静默失败 = 没报错，但结果是错的。**
+一句话前提：**静默失败 = 没报错，但结果是错的。**
 它比崩溃难缠得多 —— 崩溃会喊，它不会；你发现它的时候，往往已经晚了。
 
-| 工具 | 防的是哪种静默失败 |
-|---|---|
-| [`redact`](failclosed/redact.py) | 脱敏**漏了一处** —— 报告看着干净，其实真值还在 |
-| [`checkgate`](failclosed/checkgate.py) | 自检**没跑**却报「通过」 —— 假绿 |
-| [`reslock`](failclosed/reslock.py) | 任务**早干完了，锁还占着** —— 假占用 |
-| [`contextbudget`](failclosed/contextbudget.py) | 笔记**超限被截断** —— 尾部的规则悄悄失效 |
-| [`approvalgate`](failclosed/approvalgate.py) | 危险操作**被静默放行** —— 审批被绕过 |
-| [`checkpoint`](failclosed/checkpoint.py) | **重跑**导致重复副作用 / 跳步时用了过时输入 |
+这份仓库有三层，由外到里：
 
-**七份方法论**：
-[怎么从 0 带出一个懂业务的 agent](docs/raising-an-agent.md) ·
-[系统设计总览](docs/system-design.md) ·
-[与 AI 协作的六条护栏](docs/ai-collaboration.md) ·
-[怎么安全地改一个正在跑的系统](docs/changing-safely.md) ·
-[编排层：幂等与续跑](docs/orchestration.md) ·
-[集群开发的三块基建](docs/distribution-and-approval.md) ·
-[工程时间线](docs/timeline.md)
+| 层 | 是什么 | 能复制吗 |
+|---|---|---|
+| **表面** | **六个小工具** —— 让自动化 / AI 协作 / 多人协作不「静默出错」 | ✅ 直接拿去用 |
+| **中间** | **七份方法论** —— 换一个场景该怎么办 | ✅ 换个领域也能套 |
+| **里层** | ★ **一个命题**：[agent 与人能不能**一起**，做出一样一开始谁也不知道会变成什么的东西](docs/human-agent-coevolution.md) | ⚠ **稀缺在这里** |
+
+> 这也是为什么仓库里既有**能跑的代码**，又有一堆"**不像代码**"的东西 ——
+> 三层本来就是同一件事的三面。
 
 ---
 
@@ -61,6 +55,15 @@ python examples/approvalgate_demo.py            # 审批闸门（防自批）
 ---
 
 ## 六个工具
+
+| 工具 | 防的是哪种静默失败 |
+|---|---|
+| [`redact`](failclosed/redact.py) | 脱敏**漏了一处** —— 报告看着干净，其实真值还在 |
+| [`checkgate`](failclosed/checkgate.py) | 自检**没跑**却报「通过」 —— 假绿 |
+| [`reslock`](failclosed/reslock.py) | 任务**早干完了，锁还占着** —— 假占用 |
+| [`contextbudget`](failclosed/contextbudget.py) | 笔记**超限被截断** —— 尾部的规则悄悄失效 |
+| [`approvalgate`](failclosed/approvalgate.py) | 危险操作**被静默放行** —— 审批被绕过 |
+| [`checkpoint`](failclosed/checkpoint.py) | **重跑**导致重复副作用 / 跳步时用了过时输入 |
 
 > 每个都**自带自测**，且自测里包含「**注入一个坏场景 ⇒ 它确实报红**」。
 > 一个永远通过的检查器，比没有更糟 —— 它给你虚假的安全感。
@@ -115,7 +118,13 @@ python examples/approvalgate_demo.py            # 审批闸门（防自批）
 
 工具解决具体问题；方法论解决**「换一个场景该怎么办」**。
 
-### [怎么从 0 带出一个「懂业务」的 agent](docs/raising-an-agent.md) —— ★ 我认为最值钱的一篇
+### [人机共同进化](docs/human-agent-coevolution.md) —— ★ 立论
+
+不是「人下命令、agent 执行」，而是**一起做一样一开始谁也不知道会变成什么的东西**。
+两种协作模式 · 混沌是特征不是缺陷 · 天马行空 × 执行力 · 双向成长 ·
+需要什么条件 · 为什么值得当成一个课题。
+
+### [怎么从 0 带出一个「懂业务」的 agent](docs/raising-an-agent.md) —— 流程
 
 目标不是让 agent 会干活，而是让它**会判断**：先立约束再给任务 ·
 教它**怀疑自己**而不是听话 · 用真实事故教 · 把经验**固化成机制** ·
@@ -199,7 +208,8 @@ failclosed/
 tests/                 34 项单元测试
 examples/              六个可跑示例
 docs/
-├── raising-an-agent.md          ★ 怎么从 0 带出一个「懂业务」的 agent
+├── human-agent-coevolution.md   ★ 人机共同进化（立论）
+├── raising-an-agent.md          怎么从 0 带出一个「懂业务」的 agent（流程）
 ├── system-design.md             系统设计总览
 ├── ai-collaboration.md          与 AI 协作的六条护栏
 ├── changing-safely.md           怎么安全地改一个正在跑的系统

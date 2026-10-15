@@ -103,8 +103,13 @@ python examples/reslock_demo.py
 | 三类静默失败 | 各自有对应的守卫与回归用例 |
 
 > ★ **主系统代码不公开**：它含客户数据与商业流程，合规上不可外发。
-> 本仓库只放**与业务无关**的通用部分；设计取舍与踩坑经过写在
-> [`docs/case-study.md`](docs/case-study.md)，架构图见 [`docs/architecture.md`](docs/architecture.md)。
+> 本仓库只放**与业务无关**的通用部分。
+>
+> 想看这套东西是怎么长出来的、以及每一步为什么这么选，看这三份：
+> [`docs/timeline.md`](docs/timeline.md)（工程时间线）·
+> [`docs/case-study.md`](docs/case-study.md)（设计与踩坑）·
+> [`docs/architecture.md`](docs/architecture.md)（架构图）。
+> 完整的逐日工作记录另有脱敏存档，**面试时可提供**。
 
 ---
 
@@ -119,7 +124,8 @@ tests/             18 项单元测试
 examples/          三个可跑示例
 docs/
 ├── architecture.md  泛化架构图（mermaid）
-└── case-study.md    设计取舍与踩坑（深度叙事）
+├── case-study.md    设计取舍与踩坑（深度叙事）
+└── timeline.md      工程时间线（12 个节点 + 学到了什么）
 ```
 
 ---

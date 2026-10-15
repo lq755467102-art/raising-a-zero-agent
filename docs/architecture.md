@@ -25,6 +25,8 @@ flowchart TB
         LOCK["reslock<br/>按资源分片的锁"]
         RED["redact<br/>脱敏 + 残留自检"]
         GATE["checkgate<br/>发布前检查闸门"]
+        APPR["approvalgate<br/>审批闸门（防自批）"]
+        BUDG["contextbudget<br/>上下文预算水位"]
     end
 
     subgraph DATA["数据层"]
@@ -40,9 +42,11 @@ flowchart TB
     WORK -. "独占账号级共享资源" .-> LOCK
     DOC -. "导出前脱敏" .-> RED
     DB -. "提交前自检" .-> GATE
+    WORK -. "有副作用的操作" .-> APPR
+    ORCH -. "指令 / 笔记容量" .-> BUDG
 
     classDef guard fill:#fff4e5,stroke:#d97706,stroke-width:2px;
-    class LOCK,RED,GATE guard;
+    class LOCK,RED,GATE,APPR,BUDG guard;
 ```
 
 **要点**：守卫层不参与业务，只回答「**这一步出去之后，会不会把不该出去的东西带出去 / 会不会骗自己**」。
@@ -117,5 +121,6 @@ stateDiagram-v2
 |---|---|---|
 | 调度 | 任务没跑，却以为跑了 | 完成心跳 / 结果落库校验 |
 | 执行 | 抢了别人的资源 / 被抢 | `reslock` 分片锁 |
-| 守卫 | 自检没跑却报通过；脱敏漏一处 | `checkgate` / `redact` |
+| 守卫 | 自检没跑却报通过；脱敏漏一处；笔记超限被截断 | `checkgate` / `redact` / `contextbudget` |
+| 编排 | 有副作用的操作被**静默放行** | `approvalgate`（防自批） |
 | 数据 | 导出物里带真值 | `redact` 的 fail-closed 自检 |

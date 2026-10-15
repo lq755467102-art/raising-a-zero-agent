@@ -17,6 +17,8 @@ from failclosed.redact import ContextRule, LeakError, Redactor
 from failclosed.checkgate import run_gate
 from failclosed.reslock import LockBusy, ResourceLock, pid_alive
 from failclosed.contextbudget import Item, check as check_budget
+from failclosed.approvalgate import (ApprovalError, ApprovalStore,
+                                     SelfApprovalError, UnknownRequest)
 
 def _quiet(*_a, **_k):   # 静音 echo（Python 3.8 起可用；staticmethod 对象要到 3.10 才可调用）
     return None
@@ -202,6 +204,58 @@ class TestContextbudget(unittest.TestCase):
     def test_all_within_budget_passes(self):
         rep = check_budget([Item("a", "a.md", 1000)], _chars=self._read)
         self.assertTrue(rep.ok)
+
+
+class TestApprovalgate(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.store = ApprovalStore(os.path.join(self._tmp.name, "approvals.json"))
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_not_allowed_until_approved(self):
+        req = self.store.submit("publish", {"t": 1}, requester="alice")
+        self.assertFalse(self.store.is_allowed(req["id"]))
+        self.store.decide(req["id"], approver="bob", approve=True)
+        self.assertTrue(self.store.is_allowed(req["id"]))
+
+    def test_self_approval_denied(self):
+        req = self.store.submit("publish", {"t": 1}, requester="alice")
+        with self.assertRaises(SelfApprovalError):
+            self.store.decide(req["id"], approver="alice", approve=True)
+        self.assertFalse(self.store.is_allowed(req["id"]))          # 状态没变
+        self.assertEqual(self.store.get(req["id"])["status"], "pending")
+
+    def test_idempotent_submit(self):
+        a = self.store.submit("publish", {"t": 1}, requester="alice")
+        b = self.store.submit("publish", {"t": 1}, requester="alice")
+        self.assertEqual(a["id"], b["id"])
+        self.assertEqual(len(self.store.list_pending()), 1)
+
+    def test_reject_does_not_allow(self):
+        req = self.store.submit("publish", {"t": 2}, requester="carol")
+        self.store.decide(req["id"], approver="bob", approve=False)
+        self.assertFalse(self.store.is_allowed(req["id"]))
+
+    def test_double_decide_raises(self):
+        req = self.store.submit("publish", {"t": 3}, requester="carol")
+        self.store.decide(req["id"], approver="bob", approve=True)
+        with self.assertRaises(ApprovalError):
+            self.store.decide(req["id"], approver="bob", approve=False)
+
+    def test_unknown_request(self):
+        self.assertFalse(self.store.is_allowed("nope"))
+        with self.assertRaises(UnknownRequest):
+            self.store.decide("nope", approver="bob", approve=True)
+
+    def test_audit_records_self_approval_denial(self):
+        req = self.store.submit("publish", {"t": 4}, requester="alice")
+        with self.assertRaises(SelfApprovalError):
+            self.store.decide(req["id"], approver="alice", approve=True)
+        actions = [a["action"] for a in self.store.audit_log()]
+        self.assertIn("submit", actions)
+        self.assertIn("self-approval-denied", actions)
 
 
 if __name__ == "__main__":

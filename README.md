@@ -1,6 +1,6 @@
 # failclosed-toolkit
 
-> 让 **AI 协作 / 无人值守自动化**不「静默出错」的**四个工具 + 一份方法论**。
+> 让 **AI 协作 / 无人值守自动化 / 多人协作**不「静默出错」的**五个工具 + 两份方法论**。
 
 纯标准库，零第三方依赖，Python 3.8+。
 
@@ -13,7 +13,7 @@
 - **显性失败**：崩了、抛异常了 —— 会被人看见，可以修。
 - **静默失败**：**没报错，但结果是错的** —— 没人发现，直到出事。
 
-第二类才是难缠的。真实工程里反复撞见的是这四种：
+第二类才是难缠的。真实工程里反复撞见的是这五种：
 
 | 静默失败 | 症状 |
 |---|---|
@@ -21,13 +21,14 @@
 | 自检**没跑**却打印「全部通过」 | 「假绿」：以为守住了，其实门是开的 |
 | 任务**早就干完了，锁还占着** | 「假占用」：后续任务被无声地堵住 |
 | 笔记**超了容量上限** | 「静默截断」：尾部的规则悄悄失效，不报错 |
+| 危险操作**没人守** | 「静默放行」：改配置 / 发布这类动作被绕过，无人察觉 |
 
-本仓库把针对这四类问题的做法，抽成四个**与业务无关**的通用工具；
-并把背后的判断写成了一份方法论（见 [§方法论](#方法论)）。
+本仓库把针对这五类问题的做法，抽成五个**与业务无关**的通用工具；
+并把背后的判断写成两份方法论（见 [§方法论](#方法论)）。
 
 ---
 
-## 四个工具
+## 五个工具
 
 ### `redact` —— 脱敏 + 残留自检（fail-closed）
 
@@ -67,19 +68,29 @@
 本工具量水位并预警：三态 `ok / near / over`（接近线默认 90%），
 **只读不写**（守卫不该有副作用）。
 
+### `approvalgate` —— 审批闸门
+
+有副作用的操作必须有人批，且**不能自己批自己**：
+
+- **只有 `approved` 放行**（未知状态 / 不存在 / 已驳回 ⇒ 一律不放行）；
+- **申请人 == 审批人 ⇒ 拒绝**，并记入审计 —— 形式上的分离审批，实质是绕过；
+- 同人同内容**幂等**，不重复排队；
+- 每次状态变更**留痕**。
+
 ---
 
 ## 快速开始
 
 ```bash
-# 单元测试（21 项）
+# 单元测试（28 项）
 python -m unittest discover -s tests -v
 
-# 四个可跑示例
+# 五个可跑示例（后三个刻意以退出码 1 收尾，用来证明闸门/守卫真的会拦）
 python examples/redact_demo.py
-python examples/checkgate_demo/run.py     # 退出码 1：有阻塞项，不放行
 python examples/reslock_demo.py
-python examples/contextbudget_demo.py     # 退出码 1：有文件超线
+python examples/checkgate_demo/run.py        # 有阻塞项 ⇒ 不放行
+python examples/contextbudget_demo.py        # 有文件超线
+python examples/approvalgate_demo.py
 ```
 
 `checkgate` 的示例输出：
@@ -98,8 +109,9 @@ python examples/contextbudget_demo.py     # 退出码 1：有文件超线
 
 ## 方法论
 
-四个工具背后是同一套判断。完整版写在
-**[`docs/ai-collaboration.md`](docs/ai-collaboration.md)**，六条护栏：
+五个工具背后是同一套判断。两份文档：
+
+### [`docs/ai-collaboration.md`](docs/ai-collaboration.md) —— 与 AI 协作的六条护栏
 
 | 护栏 | 一句话 |
 |---|---|
@@ -110,18 +122,26 @@ python examples/contextbudget_demo.py     # 退出码 1：有文件超线
 | **上下文预算** | 防静默截断，且接到既有必跑路径上 |
 | **给 agent 写文档** | 歧义 = 静默失败；结论先行 + 写清边界与反例 |
 
-还包括：**身份判据要用改不了的东西**（平台事实，而非可伪造的本地标记）、
-**最小暴露**（真值不出门）、**多轮短跑**、**复杂度倒置**（复杂度留在有权限的一侧）。
+### [`docs/distribution-and-approval.md`](docs/distribution-and-approval.md) —— 集群开发的三块基础设施
+
+| 需要什么 | 缺了会怎样 |
+|---|---|
+| **能力可分发**（单一真源 → 打包 → 投递 → **幂等安装 + 可校验**） | 别人用不上，或各自版本不同 |
+| **危险操作有闸门**（防自批 + 幂等 + 审计） | 靠自觉的约束等于没有约束 |
+| **多维度定权**（主体 × 资源 × 操作，判据不可伪造） | 要么全开、要么全关，中间没有档位 |
+
+> 合起来：**把「只有作者本人能维护」，变成「一群人都能维护，而且不会互相踩」。**
 
 ---
 
 ## 从哪来
 
-这四个工具是从一套**生产级自动化系统**里抽出的可公开子集。那套系统是这样的（已泛化）：
+这些工具与经验，来自一套**生产级自动化系统**（已泛化）：
 
 - 面向**多个外部 Web 平台**的数据采集与合规自动化；
 - 数十个租户、几十个自动化任务、多台机器、**无人值守**定时运行；
-- 由「调度 → 执行 → 守卫 → 数据」四层构成，守卫层负责并发、脱敏、发布前自检。
+- 由「调度 → 执行 → 守卫 → 数据」四层构成，守卫层负责并发、脱敏、发布前自检；
+- 能力**分发给多名使用者**，带审批闸门与分级权限。
 
 **规模与效果（可核）：**
 
@@ -130,13 +150,14 @@ python examples/contextbudget_demo.py     # 退出码 1：有文件超线
 | 发布前一致性检查器 | 14 项（注册表驱动，加一项只改一处） |
 | 自动化脚本 / 复用单元 | 80+ / 30+ |
 | 批处理性能 | 150 个目标：**352s → 69s**（约 5×） |
-| 静默失败 | 四类各有守卫 + 回归用例 |
+| 静默失败 | 五类各有守卫 + 回归用例 |
 
 > ★ **主系统代码不公开**：它含客户数据与商业流程，合规上不可外发。
 > 本仓库只放**与业务无关**的通用部分。
 >
-> 想看这套东西是怎么长出来的、以及每一步为什么这么选，看这四份：
-> [`docs/ai-collaboration.md`](docs/ai-collaboration.md)（方法论）·
+> 想看这套东西是怎么长出来的、以及每一步为什么这么选：
+> [`docs/ai-collaboration.md`](docs/ai-collaboration.md)（AI 协作护栏）·
+> [`docs/distribution-and-approval.md`](docs/distribution-and-approval.md)（集群开发基建）·
 > [`docs/timeline.md`](docs/timeline.md)（工程时间线）·
 > [`docs/case-study.md`](docs/case-study.md)（设计与踩坑）·
 > [`docs/architecture.md`](docs/architecture.md)（架构图）。
@@ -151,14 +172,16 @@ failclosed/
 ├── redact.py          脱敏 + 残留自检（fail-closed）
 ├── checkgate.py       检查器注册表 + 运行闸门（fail-closed）
 ├── reslock.py         按资源分片的文件锁（心跳 + 陈旧接管）
-└── contextbudget.py   上下文预算守卫（防静默截断）
-tests/                 21 项单元测试
-examples/              四个可跑示例
+├── contextbudget.py   上下文预算守卫（防静默截断）
+└── approvalgate.py    审批闸门（防自批 + 幂等 + 审计）
+tests/                 28 项单元测试
+examples/              五个可跑示例
 docs/
-├── ai-collaboration.md  方法论：六条护栏（★ 求职核心）
-├── timeline.md          工程时间线（12 个节点 + 学到了什么）
-├── case-study.md        设计取舍与踩坑（深度叙事）
-└── architecture.md      泛化架构图（mermaid）
+├── ai-collaboration.md          方法论：与 AI 协作的六条护栏
+├── distribution-and-approval.md 架构：分发 / 审批 / 定权（集群开发基建）
+├── timeline.md                  工程时间线（12 个节点 + 学到了什么）
+├── case-study.md                设计取舍与踩坑（深度叙事）
+└── architecture.md              泛化架构图（mermaid）
 ```
 
 ---

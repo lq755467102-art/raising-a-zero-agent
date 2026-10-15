@@ -16,11 +16,15 @@ from .redact import ContextRule, LeakError, Redactor
 from .checkgate import GateResult, RegistryError, load_registry, run_gate
 from .reslock import LockBusy, LockInfo, ResourceLock, pid_alive
 from .contextbudget import BudgetReport, Item, Reading, check as check_budget
+from .approvalgate import (APPROVED, PENDING, REJECTED, ApprovalError,
+                           ApprovalStore, SelfApprovalError, UnknownRequest)
 
 __all__ = [
     "Redactor", "ContextRule", "LeakError",
     "run_gate", "load_registry", "GateResult", "RegistryError",
     "ResourceLock", "LockInfo", "LockBusy", "pid_alive",
     "Item", "Reading", "BudgetReport", "check_budget",
+    "ApprovalStore", "ApprovalError", "SelfApprovalError", "UnknownRequest",
+    "PENDING", "APPROVED", "REJECTED",
 ]
-__version__ = "0.2.0"
+__version__ = "0.3.0"

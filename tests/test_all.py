@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from failclosed.redact import ContextRule, LeakError, Redactor
 from failclosed.checkgate import run_gate
 from failclosed.reslock import LockBusy, ResourceLock, pid_alive
+from failclosed.contextbudget import Item, check as check_budget
 
 def _quiet(*_a, **_k):   # 静音 echo（Python 3.8 起可用；staticmethod 对象要到 3.10 才可调用）
     return None
@@ -171,6 +172,36 @@ class TestReslock(unittest.TestCase):
     def test_pid_alive(self):
         self.assertTrue(pid_alive(os.getpid()))
         self.assertFalse(pid_alive(99999999))
+
+
+class TestContextbudget(unittest.TestCase):
+    SIZES = {"a.md": 100, "b.md": 900, "c.md": 1000, "d.md": 1001}
+
+    def _read(self, path):
+        return self.SIZES.get(path)          # 未知文件 → None（缺失）
+
+    def test_states(self):
+        rep = check_budget(
+            [Item("a", "a.md", 1000), Item("b", "b.md", 1000),
+             Item("c", "c.md", 1000), Item("d", "d.md", 1000),
+             Item("g", "ghost.md", 1000)], _chars=self._read)
+        st = {r.name: r.state for r in rep.readings}
+        self.assertEqual(st["a"], "ok")
+        self.assertEqual(st["b"], "near")          # 恰好到接近线
+        self.assertEqual(st["c"], "near")          # 恰好等于上限，还没超
+        self.assertEqual(st["d"], "over")
+        self.assertEqual(st["g"], "missing")
+
+    def test_over_fails_but_missing_does_not(self):
+        over = check_budget([Item("d", "d.md", 1000)], _chars=self._read)
+        self.assertFalse(over.ok)
+        ghost = check_budget([Item("g", "ghost.md", 1000)], _chars=self._read)
+        self.assertTrue(ghost.ok)                  # 配置问题 ≠ 超线
+        self.assertEqual(len(ghost.missing), 1)
+
+    def test_all_within_budget_passes(self):
+        rep = check_budget([Item("a", "a.md", 1000)], _chars=self._read)
+        self.assertTrue(rep.ok)
 
 
 if __name__ == "__main__":

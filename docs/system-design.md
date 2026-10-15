@@ -150,8 +150,9 @@ flowchart LR
 
 | 原则 | 详细在哪 |
 |---|---|
-| **人机共同进化**（立论：为什么这不只是"带出一个 agent"） | [human-agent-coevolution.md](human-agent-coevolution.md) |
-| **怎么把 agent 带成领域专家**（流程） | [raising-an-agent.md](raising-an-agent.md) |
+| **0 号 AI**（主张：为什么由"一个人灌注给一个 AI、再克隆出去"） | [zero-agent.md](zero-agent.md) |
+| **怎么把 agent 带成领域专家**（主线 · 流程） | [raising-an-agent.md](raising-an-agent.md) |
+| **人机共同进化**（终局设想） | [human-agent-coevolution.md](human-agent-coevolution.md) |
 | fail-closed / 单一真源 / 验证独立 / 护栏真跑 / 上下文预算 / 给 agent 写文档 | [ai-collaboration.md](ai-collaboration.md) |
 | 行为等价性 / 原子替换 / 只增不删 / 模板注入 / 分片取样 / 路径无关 | [changing-safely.md](changing-safely.md) |
 | 幂等 / 续跑 / 状态机 / 重试 / 人机边界 | [orchestration.md](orchestration.md) |

@@ -255,7 +255,7 @@ AI 能做出很多东西，但只有懂业务的人能回答「**这是不是我
 | 改了行为，别人却不知道   | **行为等价性验证**   |
 | 旧版本累积、越滚越乱    | **只增不删 + 留档** |
 
-→ [怎么安全地改一个正在跑的系统](docs/changing-safely.md)
+→ [漂移：为什么"改得快"就必然"漂得快"](docs/drift.md)（四种形态 + 四种防法）
 
 ### ④ 效率 · 业务技能成型之后
 
@@ -294,7 +294,7 @@ AI 能做出很多东西，但只有懂业务的人能回答「**这是不是我
 > 「红绿验证」和前面「原型比语言更擅长对齐意图」是同一招：  
 > **不要用语言对齐，用一个会变色的东西对齐。**
 
-→ [与 AI 协作的六条护栏](docs/ai-collaboration.md)
+→ [认知漂移](docs/cognitive-drift.md)（含「真源要分域」）· [与 AI 协作的六条护栏](docs/ai-collaboration.md)
 
 ---
 
@@ -310,6 +310,8 @@ AI 能做出很多东西，但只有懂业务的人能回答「**这是不是我
 | 专题          | [系统设计总览](docs/system-design.md)                           | 分层职责 · 任务生命周期 · 失败分类学 · 扩展点        |
 | 专题          | [与 AI 协作的六条护栏](docs/ai-collaboration.md)                  | fail-closed · 单一真源 · 独立验证 · 护栏真跑 … |
 | 专题          | [怎么安全地改一个正在跑的系统](docs/changing-safely.md)                 | 行为等价性 · 原子替换 · 只增不删 · 模板注入         |
+| 专题          | [漂移](docs/drift.md)                                       | 为什么躲不掉 · 四种形态与防法 · 让漂移可见           |
+| 专题          | [认知漂移](docs/cognitive-drift.md)                            | 实现层 vs 意图层 · 真源要分域 · 红绿验证          |
 | 专题          | [编排层：幂等与续跑](docs/orchestration.md)                        | 输入指纹 · 状态机与心跳 · 重试的边界              |
 | 专题          | [集群开发的三块基建](docs/distribution-and-approval.md)            | 分发 · 审批 · 多维度定权                    |
 | 专题          | [工程时间线](docs/timeline.md)                                 | 12 个节点：撞到什么 / 怎么解 / 学到什么           |
@@ -526,6 +528,8 @@ docs/
 ├── system-design.md             系统设计总览
 ├── ai-collaboration.md          与 AI 协作的六条护栏
 ├── changing-safely.md           怎么安全地改一个正在跑的系统
+├── drift.md                     漂移：为什么"改得快"就必然"漂得快"
+├── cognitive-drift.md           认知漂移：AI 的实现 vs 人的意图
 ├── orchestration.md             编排层：幂等 / 续跑 / 状态机
 ├── distribution-and-approval.md 分发 / 审批 / 定权（集群开发基建）
 ├── timeline.md                  工程时间线（12 个节点 + 学到了什么）

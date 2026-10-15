@@ -150,6 +150,7 @@ flowchart LR
 
 | 原则 | 详细在哪 |
 |---|---|
+| **怎么把 agent 带成领域专家**（人机回路） | [raising-an-agent.md](raising-an-agent.md) |
 | fail-closed / 单一真源 / 验证独立 / 护栏真跑 / 上下文预算 / 给 agent 写文档 | [ai-collaboration.md](ai-collaboration.md) |
 | 行为等价性 / 原子替换 / 只增不删 / 模板注入 / 分片取样 / 路径无关 | [changing-safely.md](changing-safely.md) |
 | 幂等 / 续跑 / 状态机 / 重试 / 人机边界 | [orchestration.md](orchestration.md) |

@@ -20,7 +20,8 @@
 | [`approvalgate`](failclosed/approvalgate.py) | 危险操作**被静默放行** —— 审批被绕过 |
 | [`checkpoint`](failclosed/checkpoint.py) | **重跑**导致重复副作用 / 跳步时用了过时输入 |
 
-**六份方法论**：
+**七份方法论**：
+[怎么从 0 带出一个懂业务的 agent](docs/raising-an-agent.md) ·
 [系统设计总览](docs/system-design.md) ·
 [与 AI 协作的六条护栏](docs/ai-collaboration.md) ·
 [怎么安全地改一个正在跑的系统](docs/changing-safely.md) ·
@@ -110,11 +111,19 @@ python examples/approvalgate_demo.py            # 审批闸门（防自批）
 
 ---
 
-## 六份方法论
+## 七份方法论
 
 工具解决具体问题；方法论解决**「换一个场景该怎么办」**。
 
-### [系统设计总览](docs/system-design.md) —— 先看这篇
+### [怎么从 0 带出一个「懂业务」的 agent](docs/raising-an-agent.md) —— ★ 我认为最值钱的一篇
+
+目标不是让 agent 会干活，而是让它**会判断**：先立约束再给任务 ·
+教它**怀疑自己**而不是听话 · 用真实事故教 · 把经验**固化成机制** ·
+给它判断权 · 主动索要质疑。附完整的人机回路。
+
+> 市场上缺的不是"会用 AI 的人"，是**能把 agent 带成领域专家、再嵌进组织**的人。
+
+### [系统设计总览](docs/system-design.md)
 
 分层与职责（**每层"不做什么"**）· 一次任务的完整路径 · 失败分类学 ·
 控制点地图 · 真值边界 · 人机边界 · 扩展点。
@@ -190,7 +199,8 @@ failclosed/
 tests/                 34 项单元测试
 examples/              六个可跑示例
 docs/
-├── system-design.md             系统设计总览（先看这篇）
+├── raising-an-agent.md          ★ 怎么从 0 带出一个「懂业务」的 agent
+├── system-design.md             系统设计总览
 ├── ai-collaboration.md          与 AI 协作的六条护栏
 ├── changing-safely.md           怎么安全地改一个正在跑的系统
 ├── orchestration.md             编排层：幂等 / 续跑 / 状态机

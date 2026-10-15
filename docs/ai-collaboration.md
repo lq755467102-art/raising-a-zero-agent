@@ -54,7 +54,7 @@
 
 > 这条救过场。**自己检查自己，等于没检查。**
 
-→ [`redact.py`](../failclosed/redact.py) 的 `residual()`
+→ [`redact.py`](../failclosed/redact.py) 里那个「替换完再独立扫一遍」的函数（`residual()`）
 
 ## 4. 护栏必须**真跑**，且能证明它「抓得住」
 
@@ -134,14 +134,14 @@
 
 | 原则 | 代码落点 |
 |---|---|
-| 判不了 = 不通过 | `checkgate` |
-| 单一真源 | `checkgate` 的注册表 |
-| 验证独立于被测对象 | `redact.residual` |
-| 护栏要真跑、能证伪 | 各模块 `--selftest` + 示例 |
-| 防静默截断 | `contextbudget` |
-| 资源不该被粗粒度互斥 | `reslock` 分片 |
-| 进程活着 ≠ 在干活 | `reslock` 心跳 |
-| 审批不能被绕过 | `approvalgate` |
+| 判不了 = 不通过 | `checkgate` —— **发布前的检查闸门** |
+| 单一真源 | `checkgate` 的登记表 —— 加一项检查只改一处 |
+| 验证独立于被测对象 | `redact.residual` —— **脱敏后独立再扫一遍** |
+| 护栏要真跑、能证伪 | 各模块自带的 `--selftest`（内置自测）+ 可跑示例 |
+| 防静默截断 | `contextbudget` —— **量上下文水位，超线预警** |
+| 资源不该被粗粒度互斥 | `reslock` —— 锁**按资源分片**，不相干的任务不排队 |
+| 进程活着 ≠ 在干活 | `reslock` —— **持锁方打卡**（心跳） |
+| 审批不能被绕过 | `approvalgate` —— **防"自己批自己"** |
 
 ---
 

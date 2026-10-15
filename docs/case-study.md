@@ -121,12 +121,12 @@
 - **心跳**：持有方定期刷新 `beat`，等待方见 `beat` 过期即可接管 ——  
   不必等 pid 死、也不必等 TTL。真还在跑时 `beat` 一直是新的，**绝不会被误抢**。
 
-**★ 一个跨平台坑**：
+**★ 一个跨平台坑**（要解决的事：判断某个进程还活着没有 —— 用来回收被僵尸进程占住的锁）：
 
-> 原实现是 Node，用 `process.kill(pid, 0)` 安全判活。  
-> 照搬到 Python 写成 `os.kill(pid, 0)` —— **在 Windows 上会把那个进程真的杀掉**：  
-> Python 的 `os.kill` 对非 `CTRL_*` 信号一律走 `TerminateProcess`，`0` 也不例外。  
-> ⇒ 必须改用 `OpenProcess` + `GetExitCodeProcess`。
+> 原实现是 Node，用 `process.kill(pid, 0)` —— 传 `0` 表示「**只探测、不发信号**」，安全。  
+> 照搬到 Python 写成 `os.kill(pid, 0)`（名字几乎一模一样）—— **在 Windows 上会把那个进程真的杀掉**：  
+> Python 的 `os.kill` 只对 `CTRL_*`（Ctrl+C 那一类控制信号）有特殊语义，其余值**包括 `0`** 一律走「强制终止」。  
+> ⇒ 必须改用 `OpenProcess` + `GetExitCodeProcess` —— 这两个系统接口**只查询状态、不发信号**，绝不会误杀。
 >
 > **同名 API ≠ 同义 API。安全相关的调用必须逐条查文档。**
 

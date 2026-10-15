@@ -67,7 +67,7 @@
 - 自测里必须包含「**注入一个坏场景 ⇒ 它确实报红**」，而不只是"好场景通过"；
 - 示例刻意留一个失败项，用它证明闸门**真的会拦**。
 
-→ 五个模块的 `--selftest`；[`examples/checkgate_demo/`](../examples/checkgate_demo)（退出码刻意是 1）
+→ 八个模块的 `--selftest`；[`examples/checkgate_demo/`](../examples/checkgate_demo)（退出码刻意是 1）
 
 ## 5. 上下文预算：防**静默截断**
 

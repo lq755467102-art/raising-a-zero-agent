@@ -53,17 +53,43 @@ import sys
 # ── 解析规则（★ 判据单一真源：要改就改这里）──────────────────────────
 
 _LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+# ★ 行内豁免标记：写在行尾即可跳过该行。
+# 用途是「这里写的是**引文**（别人的过期数字、反例里的假数字），不是本仓库的声明」——
+# 工具不该逼内容改写去迁就它，所以给一条明确的出口。
+_IGNORE = "doccheck-ignore"
 _HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 _FENCE = re.compile(r"^\s*(```|~~~)")
 _EXTERNAL = re.compile(r"^(https?:|mailto:|tel:|data:)")
 
 # 文档里写「N 个 X」时，N 该等于什么
+# ★ 阿拉伯数字与中文数字（一~十）都要认 —— 否则「八个工具」这类写法会成为盲区
+_NUM = r"([0-9]+|[一二三四五六七八九十])"
+
 NUMBER_RULES = [
-    (re.compile(r"(\d+)\s*个模块"),   "modules",       "zeroagent/ 下的模块数（不含 __init__）"),
-    (re.compile(r"(\d+)\s*篇文档"),   "docs",          "docs/ 下的文档数"),
-    (re.compile(r"(\d+)\s*项单测"),   "unit_tests",    "tests/ 下的测试数（数 def test_）"),
-    (re.compile(r"(\d+)\s*条反模式"), "anti_patterns", "anti-patterns.md 里的条目数"),
+    (re.compile(_NUM + r"\s*个(?:可跑的)?模块"), "modules",
+     "zeroagent/ 下的模块数（不含 __init__）"),
+    (re.compile(_NUM + r"\s*个(?:可跑的)?工具"), "modules",
+     "zeroagent/ 下的模块数（不含 __init__）"),
+    (re.compile(_NUM + r"\s*篇文档"), "docs", "docs/ 下的文档数"),
+    (re.compile(_NUM + r"\s*项单测"), "unit_tests",
+     "tests/ 下的测试数（数 def test_）"),
+    (re.compile(_NUM + r"\s*条反模式"), "anti_patterns",
+     "anti-patterns.md 里的条目数"),
 ]
+
+_CN_DIGITS = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5,
+              "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
+
+
+def to_int(text):
+    """把捕获到的数字转成 int：认得阿拉伯数字，也认一~十。
+
+    认不出返回 None（由调用方按 fail-closed 报「判不了」）。
+    """
+    text = (text or "").strip()
+    if text.isdigit():
+        return int(text)
+    return _CN_DIGITS.get(text)
 
 
 class Ref(object):
@@ -223,6 +249,8 @@ def check(root=".", md_files=None):
             continue
 
         for i, line in enumerate(_strip_fences(text), 1):
+            if _IGNORE in line:      # 显式豁免（见文件头 _IGNORE 的说明）
+                continue
             # —— 链接 / 锚点 ——
             for target in _LINK.findall(line):
                 if _EXTERNAL.match(target):
@@ -268,16 +296,19 @@ def check(root=".", md_files=None):
             # —— 数量声明 ——
             for pattern, key, desc in NUMBER_RULES:
                 for m in pattern.finditer(line):
-                    want = int(m.group(1))
+                    want = to_int(m.group(1))
                     got = _count(root, key)
-                    if got is None:
+                    if want is None:
+                        refs.append(Ref(rel, i, "number", m.group(0), "unresolved",
+                                        "数字认不出：%s" % m.group(1)))
+                    elif got is None:
                         refs.append(Ref(rel, i, "number", m.group(0), "unresolved",
                                         "数不出来（%s）" % desc))
                     elif got == want:
                         refs.append(Ref(rel, i, "number", m.group(0), "ok"))
                     else:
                         refs.append(Ref(rel, i, "number", m.group(0), "stale",
-                                        "写的是 %d，实际 %d（%s）" % (want, got, desc)))
+                                        "写的是 %s，实际 %d（%s）" % (m.group(1), got, desc)))
 
     return DocReport(refs)
 
@@ -330,6 +361,12 @@ def _selftest():
     eq("slug 英文 + 标点", slug("它是怎么被写出来的"), "它是怎么被写出来的")
     eq("slug 带空格与点", slug("Step 1. Setup"), "step-1-setup")
 
+    # 数字解析：阿拉伯 + 中文（★ 中文那半是后补的 —— 之前「八个工具」是盲区）
+    eq("数字：阿拉伯", to_int("6"), 6)
+    eq("数字：八", to_int("八"), 8)
+    eq("数字：十", to_int("十"), 10)
+    eq("数字：认不出 ⇒ None（不冒充 0）", to_int("余"), None)
+
     with tempfile.TemporaryDirectory() as tmp:
         os.makedirs(os.path.join(tmp, "docs"))
         os.makedirs(os.path.join(tmp, "zeroagent"))
@@ -376,6 +413,16 @@ def _selftest():
         eq("数量不符 ⇒ 报红", rep.ok, False)
         eq("数量不符给出实际值",
            any("99" in r.detail and "2" in r.detail for r in rep.stale), True)
+
+        # 注入坏场景 4：★ 中文数字写法（「八个工具」）也必须被抓到 —— 曾经是盲区
+        open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(
+            "# 标题\n\n本仓库共八个工具\n")
+        eq("中文数字（八个工具）也能被抓到", check(tmp).ok, False)
+
+        # ★ 显式豁免：带 doccheck-ignore 的行整体跳过（用于「引文里的数字」这类误报）
+        open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(
+            "# 标题\n\n它写着 99 个模块 <!-- doccheck-ignore -->\n")
+        eq("带豁免标记的行被跳过", check(tmp).ok, True)
 
         # 代码块里的假链接不该被扫出来（先重写成干净内容，免得上一轮残留干扰）
         open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(

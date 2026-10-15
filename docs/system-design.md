@@ -160,7 +160,7 @@ flowchart LR
 | 行为等价性 / 原子替换 / 只增不删 / 模板注入 / 分片取样 / 路径无关               | [changing-safely.md](changing-safely.md)                     |
 | 幂等 / 续跑 / 状态机 / 重试 / 人机边界                              | [orchestration.md](orchestration.md)                         |
 | 分发 / 审批 / 多维度定权                                        | [distribution-and-approval.md](distribution-and-approval.md) |
-| 五类静默失败与对应设计（叙事版）                                       | [case-study.md](case-study.md)                               |
+| 六类静默失败与对应设计（叙事版）                                       | [case-study.md](case-study.md)                               |
 | 演进过程与踩坑                                                | [timeline.md](timeline.md)                                   |
 
 ---

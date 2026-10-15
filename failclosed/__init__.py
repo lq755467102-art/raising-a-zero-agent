@@ -18,6 +18,7 @@ from .reslock import LockBusy, LockInfo, ResourceLock, pid_alive
 from .contextbudget import BudgetReport, Item, Reading, check as check_budget
 from .approvalgate import (APPROVED, PENDING, REJECTED, ApprovalError,
                            ApprovalStore, SelfApprovalError, UnknownRequest)
+from .checkpoint import Progress, run_steps, signature
 
 __all__ = [
     "Redactor", "ContextRule", "LeakError",
@@ -26,5 +27,6 @@ __all__ = [
     "Item", "Reading", "BudgetReport", "check_budget",
     "ApprovalStore", "ApprovalError", "SelfApprovalError", "UnknownRequest",
     "PENDING", "APPROVED", "REJECTED",
+    "Progress", "run_steps", "signature",
 ]
-__version__ = "0.3.0"
+__version__ = "0.4.0"

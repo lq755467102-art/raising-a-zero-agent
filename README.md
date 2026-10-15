@@ -2,7 +2,7 @@
 
 > 让 **AI 协作 / 无人值守自动化 / 多人协作**不「静默出错」的工具箱 + 方法论。
 
-`零依赖` · `纯标准库` · `Python 3.8+` · `28 项单测 + 56 项自测`
+`零依赖` · `纯标准库` · `Python 3.8+` · `34 项单测 + 67 项自测`
 
 ---
 
@@ -18,10 +18,13 @@
 | [`reslock`](failclosed/reslock.py) | 任务**早干完了，锁还占着** —— 假占用 |
 | [`contextbudget`](failclosed/contextbudget.py) | 笔记**超限被截断** —— 尾部的规则悄悄失效 |
 | [`approvalgate`](failclosed/approvalgate.py) | 危险操作**被静默放行** —— 审批被绕过 |
+| [`checkpoint`](failclosed/checkpoint.py) | **重跑**导致重复副作用 / 跳步时用了过时输入 |
 
-**四份方法论**：
+**六份方法论**：
+[系统设计总览](docs/system-design.md) ·
 [与 AI 协作的六条护栏](docs/ai-collaboration.md) ·
 [怎么安全地改一个正在跑的系统](docs/changing-safely.md) ·
+[编排层：幂等与续跑](docs/orchestration.md) ·
 [集群开发的三块基建](docs/distribution-and-approval.md) ·
 [工程时间线](docs/timeline.md)
 
@@ -30,12 +33,13 @@
 ## 快速开始
 
 ```bash
-# 28 项单元测试
+# 34 项单元测试
 python -m unittest discover -s tests -v
 
-# 五个可跑示例（带 ⇒ 的三个刻意以退出码 1 收尾，证明它真的会拦）
+# 六个可跑示例（带 ⇒ 的两个刻意以退出码 1 收尾，证明它真的会拦）
 python examples/redact_demo.py                  # 脱敏 + 残留自检
 python examples/reslock_demo.py                 # 分片锁 + 心跳
+python examples/checkpoint_demo.py              # 幂等 + 断点续跑
 python examples/checkgate_demo/run.py           # ⇒ 有阻塞项 ⇒ 不放行
 python examples/contextbudget_demo.py           # ⇒ 有文件超线
 python examples/approvalgate_demo.py            # 审批闸门（防自批）
@@ -55,7 +59,7 @@ python examples/approvalgate_demo.py            # 审批闸门（防自批）
 
 ---
 
-## 五个工具
+## 六个工具
 
 > 每个都**自带自测**，且自测里包含「**注入一个坏场景 ⇒ 它确实报红**」。
 > 一个永远通过的检查器，比没有更糟 —— 它给你虚假的安全感。
@@ -98,11 +102,22 @@ python examples/approvalgate_demo.py            # 审批闸门（防自批）
 
 只有 `approved` 放行 · **申请人 == 审批人 ⇒ 拒绝 + 记审计** · 同人同内容**幂等** · 全程留痕
 
+### `checkpoint` — 幂等 + 断点续跑
+
+任务中断后重跑，**要么重复副作用、要么跳错步** —— 两种错都不报错。
+这里用「**key + 输入指纹**」判断"这步做过没有"：输入一变就视为未完成；
+进度文件坏掉 ⇒ **全部重跑**（宁可多跑，绝不跳错）。
+
 ---
 
-## 四份方法论
+## 六份方法论
 
 工具解决具体问题；方法论解决**「换一个场景该怎么办」**。
+
+### [系统设计总览](docs/system-design.md) —— 先看这篇
+
+分层与职责（**每层"不做什么"**）· 一次任务的完整路径 · 失败分类学 ·
+控制点地图 · 真值边界 · 人机边界 · 扩展点。
 
 ### [与 AI 协作的六条护栏](docs/ai-collaboration.md)
 
@@ -130,6 +145,10 @@ python examples/approvalgate_demo.py            # 审批闸门（防自批）
 
 > 合起来：**把「只有作者本人能维护」，变成「一群人都能维护，而且不会互相踩」。**
 
+### [编排层：幂等与续跑](docs/orchestration.md)
+
+幂等 · 断点续跑 · **输入指纹** · 原子写 · 任务状态机与心跳 · 重试的边界 · 人机边界。
+
 ### [工程时间线](docs/timeline.md) · [设计与踩坑](docs/case-study.md) · [架构图](docs/architecture.md)
 
 这套东西是怎么长出来的、每一个取舍为什么这么选。
@@ -150,7 +169,7 @@ python examples/approvalgate_demo.py            # 审批闸门（防自批）
 | 发布前一致性检查器 | 14 项（注册表驱动，加一项只改一处） |
 | 自动化脚本 / 复用单元 | 80+ / 30+ |
 | 批处理性能 | 150 个目标：**352s → 69s**（约 5×） |
-| 静默失败 | 五类各有守卫 + 回归用例 |
+| 静默失败 | 六类各有守卫 + 回归用例 |
 
 > ★ **主系统代码不公开**：含客户数据与商业流程，合规上不可外发。
 > 本仓库只放**与业务无关**的通用部分；
@@ -166,13 +185,16 @@ failclosed/
 ├── checkgate.py       检查器注册表 + 运行闸门（fail-closed）
 ├── reslock.py         按资源分片的文件锁（心跳 + 陈旧接管）
 ├── contextbudget.py   上下文预算守卫（防静默截断）
-└── approvalgate.py    审批闸门（防自批 + 幂等 + 审计）
-tests/                 28 项单元测试
-examples/              五个可跑示例
+├── approvalgate.py    审批闸门（防自批 + 幂等 + 审计）
+└── checkpoint.py      幂等 + 断点续跑（输入指纹 + fail-closed）
+tests/                 34 项单元测试
+examples/              六个可跑示例
 docs/
-├── ai-collaboration.md          方法论：与 AI 协作的六条护栏
-├── changing-safely.md           方法论：怎么安全地改一个正在跑的系统
-├── distribution-and-approval.md 方法论：分发 / 审批 / 定权（集群开发基建）
+├── system-design.md             系统设计总览（先看这篇）
+├── ai-collaboration.md          与 AI 协作的六条护栏
+├── changing-safely.md           怎么安全地改一个正在跑的系统
+├── orchestration.md             编排层：幂等 / 续跑 / 状态机
+├── distribution-and-approval.md 分发 / 审批 / 定权（集群开发基建）
 ├── timeline.md                  工程时间线（12 个节点 + 学到了什么）
 ├── case-study.md                设计与踩坑（深度叙事）
 └── architecture.md              泛化架构图（mermaid）

@@ -10,7 +10,10 @@
 - **整体分层**：调度 → 执行 → 守卫 → 数据；**守卫层**就是本仓库抽出的部分
 - **检查闸门的判定流**：三条硬规则 —— 判不了 / 未声明 / 读不出 ⇒ **一律阻塞**
 - **锁的状态迁移**：三个判据（pid 死 / 心跳过期 / 超 TTL）各自挡什么
-- **四层各自的静默失败与守卫**（末尾一张表）
+- **五层各自的静默失败与守卫**（末尾一张表）
+
+> 这篇只画结构；**完整的设计逻辑**（职责边界、任务生命周期、边界与扩展点）
+> 见 [`system-design.md`](system-design.md)。
 
 ---
 
@@ -32,6 +35,7 @@ flowchart TB
 
     subgraph GUARD["守卫层 ← 本仓库抽出的部分"]
         LOCK["reslock<br/>按资源分片的锁"]
+        CHK["checkpoint<br/>幂等 + 断点续跑"]
         RED["redact<br/>脱敏 + 残留自检"]
         GATE["checkgate<br/>发布前检查闸门"]
         APPR["approvalgate<br/>审批闸门（防自批）"]
@@ -49,13 +53,14 @@ flowchart TB
     WORK --> DOC
 
     WORK -. "独占账号级共享资源" .-> LOCK
+    ORCH -. "可安全重跑" .-> CHK
     DOC -. "导出前脱敏" .-> RED
     DB -. "提交前自检" .-> GATE
     WORK -. "有副作用的操作" .-> APPR
     ORCH -. "指令 / 笔记容量" .-> BUDG
 
     classDef guard fill:#fff4e5,stroke:#d97706,stroke-width:2px;
-    class LOCK,RED,GATE,APPR,BUDG guard;
+    class LOCK,CHK,RED,GATE,APPR,BUDG guard;
 ```
 
 **要点**：守卫层不参与业务，只回答「**这一步出去之后，会不会把不该出去的东西带出去 / 会不会骗自己**」。
@@ -129,7 +134,7 @@ stateDiagram-v2
 | 层 | 可能怎么静默失败 | 守卫 |
 |---|---|---|
 | 调度 | 任务没跑，却以为跑了 | 完成心跳 / 结果落库校验 |
+| 编排 | **重跑**重复副作用；跳步时用了过时输入 | `checkpoint`（输入指纹） |
 | 执行 | 抢了别人的资源 / 被抢 | `reslock` 分片锁 |
-| 守卫 | 自检没跑却报通过；脱敏漏一处；笔记超限被截断 | `checkgate` / `redact` / `contextbudget` |
-| 编排 | 有副作用的操作被**静默放行** | `approvalgate`（防自批） |
+| 守卫 | 自检没跑却报通过；脱敏漏一处；笔记超限被截断；危险操作被**静默放行** | `checkgate` / `redact` / `contextbudget` / `approvalgate` |
 | 数据 | 导出物里带真值 | `redact` 的 fail-closed 自检 |

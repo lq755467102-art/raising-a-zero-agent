@@ -19,6 +19,7 @@ from failclosed.reslock import LockBusy, ResourceLock, pid_alive
 from failclosed.contextbudget import Item, check as check_budget
 from failclosed.approvalgate import (ApprovalError, ApprovalStore,
                                      SelfApprovalError, UnknownRequest)
+from failclosed.checkpoint import Progress, run_steps, signature
 
 def _quiet(*_a, **_k):   # 静音 echo（Python 3.8 起可用；staticmethod 对象要到 3.10 才可调用）
     return None
@@ -256,6 +257,60 @@ class TestApprovalgate(unittest.TestCase):
         actions = [a["action"] for a in self.store.audit_log()]
         self.assertIn("submit", actions)
         self.assertIn("self-approval-denied", actions)
+
+
+class TestCheckpoint(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.path = os.path.join(self._tmp.name, "sub", "progress.json")
+        self.calls = []
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _step(self, tag):
+        def fn():
+            self.calls.append(tag)
+            return tag + "-result"
+        return fn
+
+    def _steps(self):
+        return [("a", self._step("a")), ("b", self._step("b")), ("c", self._step("c"))]
+
+    def test_first_run_executes_all(self):
+        res = run_steps(self._steps(), Progress(self.path), echo=_quiet)
+        self.assertEqual(self.calls, ["a", "b", "c"])
+        self.assertEqual(res["b"], "b-result")
+
+    def test_rerun_is_idempotent(self):
+        prog = Progress(self.path)
+        run_steps(self._steps(), prog, echo=_quiet)
+        self.calls.clear()
+        run_steps(self._steps(), prog, echo=_quiet)
+        self.assertEqual(self.calls, [])            # 一步都不重跑
+
+    def test_changed_inputs_rerun(self):
+        prog = Progress(self.path)
+        run_steps([("a", self._step("a"))], prog, echo=_quiet)
+        self.calls.clear()
+        run_steps([("a", self._step("a"), {"v": 2})], prog, echo=_quiet)
+        self.assertEqual(self.calls, ["a"])         # 输入变了 ⇒ 重新执行
+
+    def test_corrupt_progress_is_fail_closed(self):
+        """进度文件坏掉 ⇒ 一切视为未完成（宁可重跑，不可跳错）。"""
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        with open(self.path, "w", encoding="utf-8") as f:
+            f.write("{ not json")
+        run_steps(self._steps(), Progress(self.path), echo=_quiet)
+        self.assertEqual(self.calls, ["a", "b", "c"])
+
+    def test_atomic_write_leaves_no_tmp(self):
+        run_steps(self._steps(), Progress(self.path), echo=_quiet)
+        self.assertFalse(os.path.exists(self.path + ".tmp"))
+
+    def test_signature_stability(self):
+        self.assertEqual(signature("k", {"x": 1}), signature("k", {"x": 1}))
+        self.assertNotEqual(signature("k", {"x": 1}), signature("k", {"x": 2}))
 
 
 if __name__ == "__main__":

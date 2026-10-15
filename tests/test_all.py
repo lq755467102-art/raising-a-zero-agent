@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""failclosed 单元测试。
+"""zeroagent 单元测试。
 
     python -m unittest discover -s tests -v
 """
@@ -13,13 +13,13 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from failclosed.redact import ContextRule, LeakError, Redactor
-from failclosed.checkgate import run_gate
-from failclosed.reslock import LockBusy, ResourceLock, pid_alive
-from failclosed.contextbudget import Item, check as check_budget
-from failclosed.approvalgate import (ApprovalError, ApprovalStore,
+from zeroagent.redact import ContextRule, LeakError, Redactor
+from zeroagent.checkgate import run_gate
+from zeroagent.reslock import LockBusy, ResourceLock, pid_alive
+from zeroagent.contextbudget import Item, check as check_budget
+from zeroagent.approvalgate import (ApprovalError, ApprovalStore,
                                      SelfApprovalError, UnknownRequest)
-from failclosed.checkpoint import Progress, run_steps, signature
+from zeroagent.checkpoint import Progress, run_steps, signature
 
 def _quiet(*_a, **_k):   # 静音 echo（Python 3.8 起可用；staticmethod 对象要到 3.10 才可调用）
     return None

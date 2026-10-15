@@ -23,7 +23,7 @@
 
 用法::
 
-    from failclosed.redact import Redactor, ContextRule
+    from zeroagent.redact import Redactor, ContextRule
 
     r = Redactor(
         pairs=[("Acme Corp", "<COMPANY>"), ("10000001", "<ACCOUNT>")],

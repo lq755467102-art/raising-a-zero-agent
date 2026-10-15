@@ -33,7 +33,7 @@
 - 文案**显式**写「超时·判不了」，**不冒充内容结论**（免得和"内容有问题"混为一谈）；
 - 退出码 0 的语义是「**没有阻塞项**」，不是「全绿」—— 判定行要把**警告条数**摆到眼前。
 
-→ [`checkgate.py`](../failclosed/checkgate.py)
+→ [`checkgate.py`](../zeroagent/checkgate.py)
 
 ## 2. 单一真源
 
@@ -43,7 +43,7 @@
 **怎么做**：判据、集合、文案**收口到一个注册表**；加一项检查 = 只改一处，
 运行方**只负责遍历**它。
 
-→ [`checkgate.py`](../failclosed/checkgate.py) 的注册表
+→ [`checkgate.py`](../zeroagent/checkgate.py) 的注册表
 
 ## 3. 验证必须**独立于**被测对象
 
@@ -54,7 +54,7 @@
 
 > 这条救过场。**自己检查自己，等于没检查。**
 
-→ [`redact.py`](../failclosed/redact.py) 里那个「替换完再独立扫一遍」的函数（`residual()`）
+→ [`redact.py`](../zeroagent/redact.py) 里那个「替换完再独立扫一遍」的函数（`residual()`）
 
 ## 4. 护栏必须**真跑**，且能证明它「抓得住」
 
@@ -78,7 +78,7 @@
 **怎么做**：量水位（上限 + 接近线，默认 90%，三态 `ok / near / over`）·
 **只读不写**（守卫不该有副作用）· ★ 挂到**既有必跑路径**上（提交前 / 发布前），**不新增定时任务**。
 
-→ [`contextbudget.py`](../failclosed/contextbudget.py)
+→ [`contextbudget.py`](../zeroagent/contextbudget.py)
 
 ## 6. 给 agent 写文档：**歧义 = 静默失败**
 

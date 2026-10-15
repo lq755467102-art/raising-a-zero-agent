@@ -83,8 +83,8 @@ timeline
 
 | 判断 | 落点 |
 |---|---|
-| 提交前自查 | 通用化扫描 + [`checkgate`](../failclosed/checkgate.py)（**发布前的检查闸门**） |
+| 提交前自查 | 通用化扫描 + [`checkgate`](../zeroagent/checkgate.py)（**发布前的检查闸门**） |
 | 判据只写一处 | 登记表驱动的闸门 —— 加一项检查只改登记表 |
-| 「判不了」≠「通过」 | [`checkgate`](../failclosed/checkgate.py) 的四条 fail-closed 规则 |
-| 验证独立于被测对象 | [`redact.residual`](../failclosed/redact.py)（**脱敏后独立再扫一遍**的那个函数） |
-| 「进程活着」≠「在干活」 | [`reslock`](../failclosed/reslock.py) 的**持锁方打卡**（心跳） |
+| 「判不了」≠「通过」 | [`checkgate`](../zeroagent/checkgate.py) 的四条 fail-closed 规则 |
+| 验证独立于被测对象 | [`redact.residual`](../zeroagent/redact.py)（**脱敏后独立再扫一遍**的那个函数） |
+| 「进程活着」≠「在干活」 | [`reslock`](../zeroagent/reslock.py) 的**持锁方打卡**（心跳） |

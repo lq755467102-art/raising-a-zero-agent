@@ -11,7 +11,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, ROOT)
 
-from failclosed.checkgate import run_gate
+from zeroagent.checkgate import run_gate
 
 print("═══ 检查闸门（fail-closed）═══")
 result = run_gate(os.path.join(HERE, "registry.json"),

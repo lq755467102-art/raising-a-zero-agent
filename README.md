@@ -1,4 +1,4 @@
-# failclosed-toolkit
+# raising-a-zero-agent
 
 > 一个人 + 一个 AI，从零做出一套无人值守的系统；  
 > 顺手把「怎么让系统不出静默错」沉淀成了工具与方法论。
@@ -255,7 +255,7 @@ AI 能做出很多东西，但只有懂业务的人能回答「**这是不是我
 | 「进程活着」被当成「在干活」 | **持有方心跳**     |
 | 重跑导致重复副作用      | **幂等 + 断点续跑** |
 
-→ [`reslock`](failclosed/reslock.py) · [`checkpoint`](failclosed/checkpoint.py) · [编排层](docs/orchestration.md)
+→ [`reslock`](zeroagent/reslock.py) · [`checkpoint`](zeroagent/checkpoint.py) · [编排层](docs/orchestration.md)
 
 ### ⑤ 认知漂移 · AI 的「实现」 vs 人的「意图」
 
@@ -335,12 +335,12 @@ AI 能做出很多东西，但只有懂业务的人能回答「**这是不是我
 
 | 工具                                             | 防的是哪种静默失败                   |
 | ---------------------------------------------- | --------------------------- |
-| [`redact`](failclosed/redact.py)               | 脱敏**漏了一处** —— 报告看着干净，其实真值还在 |
-| [`checkgate`](failclosed/checkgate.py)         | 自检**没跑**却报「通过」 —— 假绿        |
-| [`reslock`](failclosed/reslock.py)             | 任务**早干完了，锁还占着** —— 假占用      |
-| [`contextbudget`](failclosed/contextbudget.py) | 笔记**超限被截断** —— 尾部的规则悄悄失效    |
-| [`approvalgate`](failclosed/approvalgate.py)   | 危险操作**被静默放行** —— 审批被绕过      |
-| [`checkpoint`](failclosed/checkpoint.py)       | **重跑**导致重复副作用 / 跳步时用了过时输入   |
+| [`redact`](zeroagent/redact.py)               | 脱敏**漏了一处** —— 报告看着干净，其实真值还在 |
+| [`checkgate`](zeroagent/checkgate.py)         | 自检**没跑**却报「通过」 —— 假绿        |
+| [`reslock`](zeroagent/reslock.py)             | 任务**早干完了，锁还占着** —— 假占用      |
+| [`contextbudget`](zeroagent/contextbudget.py) | 笔记**超限被截断** —— 尾部的规则悄悄失效    |
+| [`approvalgate`](zeroagent/approvalgate.py)   | 危险操作**被静默放行** —— 审批被绕过      |
+| [`checkpoint`](zeroagent/checkpoint.py)       | **重跑**导致重复副作用 / 跳步时用了过时输入   |
 
 > 每个都**自带自测**，且自测里包含「**注入一个坏场景 ⇒ 它确实报红**」。  
 > 一个永远通过的检查器，比没有更糟 —— 它给你虚假的安全感。
@@ -497,7 +497,7 @@ python examples/approvalgate_demo.py            # 审批闸门（防自批）
 ## 目录
 
 ```
-failclosed/
+zeroagent/
 ├── redact.py          脱敏 + 残留自检（fail-closed）
 ├── checkgate.py       检查器注册表 + 运行闸门（fail-closed）
 ├── reslock.py         按资源分片的文件锁（心跳 + 陈旧接管）

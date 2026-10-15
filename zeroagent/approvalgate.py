@@ -20,7 +20,7 @@ fail-closed 三条
 
 用法::
 
-    from failclosed.approvalgate import ApprovalStore, SelfApprovalError
+    from zeroagent.approvalgate import ApprovalStore, SelfApprovalError
 
     store = ApprovalStore("approvals.json")
     req = store.submit("publish", {"target": "site"}, requester="alice")

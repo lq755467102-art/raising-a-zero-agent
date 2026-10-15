@@ -19,7 +19,7 @@
 
 用法::
 
-    from failclosed.checkpoint import Progress, run_steps
+    from zeroagent.checkpoint import Progress, run_steps
 
     prog = Progress("run/progress.json")
     steps = [

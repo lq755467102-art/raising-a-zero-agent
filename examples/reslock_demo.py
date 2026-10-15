@@ -10,7 +10,7 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from failclosed.reslock import LockBusy, ResourceLock
+from zeroagent.reslock import LockBusy, ResourceLock
 
 locks_dir = tempfile.mkdtemp(prefix="reslock-demo-")
 print("锁目录：", locks_dir)

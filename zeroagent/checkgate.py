@@ -22,7 +22,7 @@ fail-closed 的四条（都宁可拦下，也不放过）
 
 用法::
 
-    from failclosed.checkgate import run_gate
+    from zeroagent.checkgate import run_gate
     result = run_gate("registry.json", "checks/", timeout=120)
     raise SystemExit(0 if result.ok else 1)
 

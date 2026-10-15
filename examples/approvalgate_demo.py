@@ -10,7 +10,7 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from failclosed.approvalgate import ApprovalStore, SelfApprovalError
+from zeroagent.approvalgate import ApprovalStore, SelfApprovalError
 
 store = ApprovalStore(os.path.join(tempfile.mkdtemp(prefix="approval-demo-"),
                                    "approvals.json"))

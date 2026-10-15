@@ -90,12 +90,12 @@ flowchart LR
 
 | 守卫                                                | 挂在       | 挡什么                   | 失败时          |
 | ------------------------------------------------- | -------- | --------------------- | ------------ |
-| [`reslock`](../failclosed/reslock.py)             | 执行前      | 多个任务抢同一份共享资源          | 如实报出"谁在占"并退出 |
-| [`checkpoint`](../failclosed/checkpoint.py)       | 编排       | 重跑导致重复副作用 / 跳过时用了过时输入 | 视为未完成，重跑该步   |
-| [`checkgate`](../failclosed/checkgate.py)         | 提交 / 发布前 | 内容缺陷以"能推"的形式溜过去       | 阻塞（判不了也阻塞）   |
-| [`contextbudget`](../failclosed/contextbudget.py) | 提交 / 发布前 | 笔记超限被静默截断             | 预警；超线即失败     |
-| [`redact`](../failclosed/redact.py)               | 出口       | 产物里残留真值               | 拒绝产出         |
-| [`approvalgate`](../failclosed/approvalgate.py)   | 有副作用的操作前 | 审批被绕过（尤其**自批**）       | 拒绝执行         |
+| [`reslock`](../zeroagent/reslock.py)             | 执行前      | 多个任务抢同一份共享资源          | 如实报出"谁在占"并退出 |
+| [`checkpoint`](../zeroagent/checkpoint.py)       | 编排       | 重跑导致重复副作用 / 跳过时用了过时输入 | 视为未完成，重跑该步   |
+| [`checkgate`](../zeroagent/checkgate.py)         | 提交 / 发布前 | 内容缺陷以"能推"的形式溜过去       | 阻塞（判不了也阻塞）   |
+| [`contextbudget`](../zeroagent/contextbudget.py) | 提交 / 发布前 | 笔记超限被静默截断             | 预警；超线即失败     |
+| [`redact`](../zeroagent/redact.py)               | 出口       | 产物里残留真值               | 拒绝产出         |
+| [`approvalgate`](../zeroagent/approvalgate.py)   | 有副作用的操作前 | 审批被绕过（尤其**自批**）       | 拒绝执行         |
 
 **共同底线**：**没做成的，不许冒充做成了。**
 

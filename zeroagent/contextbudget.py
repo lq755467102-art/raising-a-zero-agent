@@ -20,7 +20,7 @@
 
 用法::
 
-    from failclosed.contextbudget import Item, check
+    from zeroagent.contextbudget import Item, check
     report = check([Item("memory", "MEMORY.md", 8000),
                     Item("notes", "notes.md", 4000)])
     print(report.summary())
@@ -29,8 +29,8 @@
 
 CLI::
 
-    python -m failclosed.contextbudget --item memory=MEMORY.md:8000 --item notes=notes.md:4000
-    python -m failclosed.contextbudget --config budget.json --json
+    python -m zeroagent.contextbudget --item memory=MEMORY.md:8000 --item notes=notes.md:4000
+    python -m zeroagent.contextbudget --config budget.json --json
 """
 
 import argparse
@@ -180,7 +180,7 @@ def _parse_item(spec, near):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="failclosed.contextbudget",
+    ap = argparse.ArgumentParser(prog="zeroagent.contextbudget",
                                  description="上下文预算守卫（只读）")
     ap.add_argument("--item", action="append", default=[],
                     help="name=path:limit（可重复）")

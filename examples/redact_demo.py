@@ -9,7 +9,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from failclosed.redact import ContextRule, LeakError, Redactor
+from zeroagent.redact import ContextRule, LeakError, Redactor
 
 # 词典来自「已知的真值」（配置里的公司名 / 账号），不靠正则猜
 r = Redactor(

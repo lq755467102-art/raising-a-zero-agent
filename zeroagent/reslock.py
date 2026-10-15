@@ -27,7 +27,7 @@
 
 用法::
 
-    from failclosed.reslock import ResourceLock, LockBusy
+    from zeroagent.reslock import ResourceLock, LockBusy
 
     try:
         with ResourceLock("~/.myapp/locks", resource="downloads", task="导出") as lk:

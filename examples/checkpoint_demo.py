@@ -10,7 +10,7 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from failclosed.checkpoint import Progress, run_steps
+from zeroagent.checkpoint import Progress, run_steps
 
 prog = Progress(os.path.join(tempfile.mkdtemp(prefix="checkpoint-demo-"),
                              "progress.json"))

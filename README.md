@@ -600,7 +600,7 @@ docs/
 ├── changing-safely.md           怎么安全地改一个正在跑的系统
 ├── drift.md                     漂移：为什么"改得快"就必然"漂得快"
 ├── memory-drift.md              ★ 记忆漂移：同一套规则怎么长成五份互不知情的文件
-├── memory-tree.md               ★ 记忆树：根有界 / 层可增殖 / 按任务路由（设计）
+├── memory-tree.md               ★ 记忆树：根有界 / 层可增殖 / 按任务路由（设计 + 平台取证 + 怎么让它活着）
 ├── cognitive-drift.md           认知漂移：AI 的实现 vs 人的意图
 ├── orchestration.md             编排层：幂等 / 续跑 / 状态机
 ├── distribution-and-approval.md 分发 / 审批 / 定权（集群开发基建）

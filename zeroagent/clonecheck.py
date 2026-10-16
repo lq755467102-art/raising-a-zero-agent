@@ -43,6 +43,7 @@
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -50,6 +51,17 @@ import tempfile
 
 DEFAULT_PKG = "zeroagent"
 TIMEOUT = 120.0
+
+# ★ 从 --selftest 输出里读「多少项」。
+# 各模块的输出格式**不强制统一**（例如 `自测：11 通过 / 0 失败` 就不带 `selftest:` 前缀）——
+# 格式差异是既有事实，不该让工具瞎掉；所以这里认几种常见写法。
+# 全都认不出 ⇒ 返回 None（**不猜、不冒充 0**）。
+_ITEMS_PATTERNS = (
+    re.compile(r"selftest:\s*\w+\s*[（(]\s*(\d+)\s*项"),   # 「xxx selftest: OK（11 项）」
+    re.compile(r"selftest:\s*\w+\s*[（(]\s*(\d+)"),        # 英文括号变体
+    re.compile(r"自测[：:]\s*(\d+)\s*(?:通过|项)"),         # 「自测：11 通过 / 0 失败」
+    re.compile(r"selftest:\s*(\d+)\s*(?:项|tests?)"),      # 「selftest: 11 项」
+)
 
 
 class Result(object):
@@ -120,6 +132,23 @@ def _clean_env():
     return env
 
 
+def parse_items(out):
+    """从 ``--selftest`` 的输出里读出「多少项」。
+
+    ★ 各模块的**输出格式不强制统一**（新加的模块可能用别的写法），
+    工具应当**兼容既有事实**，而不是要求所有人改输出 —— 所以这里认几种常见写法。
+    全都认不出 ⇒ 返回 ``None``（**不猜、不冒充 0**）。
+    """
+    for pat in _ITEMS_PATTERNS:
+        m = pat.search(out or "")
+        if m:
+            try:
+                return int(m.group(1))
+            except (ValueError, TypeError):
+                continue
+    return None
+
+
 def verify(src=DEFAULT_PKG, python=None, timeout=TIMEOUT, _keep=False):
     """把 ``src`` 复制到干净目录，逐个模块跑 --selftest。"""
     py = python or sys.executable
@@ -154,14 +183,7 @@ def verify(src=DEFAULT_PKG, python=None, timeout=TIMEOUT, _keep=False):
                 results.append(Result(m, "unresolved", "起不来：%s" % e))
                 continue
 
-            items = None
-            for token in ("（", "("):
-                if "selftest:" in out and token in out:
-                    seg = out.split("selftest:")[-1]
-                    digits = "".join(ch for ch in seg if ch.isdigit())
-                    if digits:
-                        items = int(digits)
-                        break
+            items = parse_items(out)
 
             if p.returncode == 0:
                 results.append(Result(m, "ok", items=items))
@@ -249,6 +271,17 @@ def _selftest():
         eq("有 stale ⇒ 整体不通过", rep.ok, False)
         eq("项数被解析出来",
            [r.items for r in rep.results if r.module == "good"][0], 3)
+
+        # ★ 项数解析必须**兼容多种输出格式**（各模块不统一，这是既有事实）
+        eq("解析 A：xxx selftest: OK（11 项）",
+           parse_items("redact selftest: OK（11 项）"), 11)
+        eq("解析 B：自测：11 通过 / 0 失败",
+           parse_items("自测：11 通过 / 0 失败"), 11)
+        eq("解析 C：selftest: 11 项",
+           parse_items("foo selftest: 11 项"), 11)
+        eq("解析：认不出 ⇒ None（不猜、不冒充 0）",
+           parse_items("这是一段完全无关的输出"), None)
+        eq("解析：空输入 ⇒ None", parse_items(""), None)
 
         # 目录不存在 ⇒ 判不了，而不是假装通过
         rep2 = verify(src=os.path.join(tmp, "no-such-dir"))

@@ -66,17 +66,31 @@ _EXTERNAL = re.compile(r"^(https?:|mailto:|tel:|data:)")
 # ★★ 中文数字必须允许多位（`+`）：否则「十一个模块」会被匹配成尾巴上的「一个模块」。
 _NUM = r"([0-9]+|[一二三四五六七八九十]+)"
 
+# ★ 量词与名词之间的**中缀**要穷举，否则「多一个字就漏过」：
+#   「N 个模块」这种紧贴写法漏不掉，但「N 个**可跑**模块」「N 项**单元**测试」都漏过 ——
+#   而且两次都是**真错漏到线上**（靠人工逆向核对才发现），补规则就是为了不再靠人肉兜。
+# ★ 一条声明只归一条规则：同义写法并进同一个正则，别新开一条 ——
+#   两条规则命中同一处会**重复计数**，把「共查 N 处引用」这个基线也带偏。
+# ★ 注释里别写具体数字（本文件就是抓数字过期的）：只写"量词形状"，数字交给规则去算。
 NUMBER_RULES = [
-    (re.compile(_NUM + r"\s*个(?:可跑的)?模块"), "modules",
+    (re.compile(_NUM + r"\s*个(?:可跑(?:的)?)?模块"), "modules",
      "zeroagent/ 下的模块数（不含 __init__）"),
-    (re.compile(_NUM + r"\s*个(?:可跑的)?工具"), "modules",
+    (re.compile(_NUM + r"\s*个(?:可跑(?:的)?)?小?工具"), "modules",
      "zeroagent/ 下的模块数（不含 __init__）"),
     (re.compile(_NUM + r"\s*篇文档"), "docs", "docs/ 下的文档数"),
-    (re.compile(_NUM + r"\s*项单测"), "unit_tests",
+    (re.compile(_NUM + r"\s*项(?:单元测试|单测)"), "unit_tests",
      "tests/ 下的测试数（数 def test_）"),
     (re.compile(_NUM + r"\s*条反模式"), "anti_patterns",
      "anti-patterns.md 里的条目数"),
 ]
+
+# ★ 明知是盲区、**故意不补**的写法（补了会逼内容就范，比盲区更糟）：
+#   - 「N 个可跑示例」：口径未定 —— 数 examples/ 顶层可跑条目，与数 examples/ 下 .py，
+#     是两个不同的值；README 同页就同时出现了这两种数法。
+#     **口径是人的裁决，不是工具的**：把数字钉死进规则，等于替人拍板。
+#   - 「N 项自测」：指代有歧义 —— 「全仓合计」与「某个模块自带」同形（同段话里两个都算对），
+#     一刀切必出误报 ⇒ 这个数**只能人工同步**（改 zeroagent/ 就要同步 README / costs / case-study）。
+#   - 「N 层」「N 类」：取决于分类口径，而层数口径本身在本仓库里就没统一。
 
 _CN_DIGITS = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5,
               "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
@@ -431,6 +445,20 @@ def _selftest():
         open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(
             "# 标题\n\n本仓库共八个工具\n")
         eq("中文数字（八个工具）也能被抓到", check(tmp).ok, False)
+
+        # ★ 坏场景 5~7：量词与名词之间**多一个字**的写法 —— 曾经整片是盲区
+        #   （「N 个小工具」「N 个可跑模块」「N 项单元测试」都真漏过，靠人工才发现）
+        for bad_line, what in (("99 个小工具", "小工具"),
+                               ("99 个可跑模块", "可跑模块"),
+                               ("99 项单元测试", "单元测试")):
+            open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(
+                "# 标题\n\n本仓库共 %s\n" % bad_line)
+            eq("中缀写法「%s」也能被抓到" % what, check(tmp).ok, False)
+
+        # ★ 反面：同三种写法的**正确值**必须放行 —— 补规则不能把对的也判红
+        open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(
+            "# 标题\n\n本仓库共 2 个小工具 / 2 个可跑模块 / 1 项单元测试\n")
+        eq("中缀写法的正确值 ⇒ 放行", check(tmp).ok, True)
 
         # ★ 显式豁免：带 doccheck-ignore 的行整体跳过（用于「引文里的数字」这类误报）
         open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(

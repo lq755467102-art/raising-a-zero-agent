@@ -62,8 +62,9 @@ _FENCE = re.compile(r"^\s*(```|~~~)")
 _EXTERNAL = re.compile(r"^(https?:|mailto:|tel:|data:)")
 
 # 文档里写「N 个 X」时，N 该等于什么
-# ★ 阿拉伯数字与中文数字（一~十）都要认 —— 否则「八个工具」这类写法会成为盲区
-_NUM = r"([0-9]+|[一二三四五六七八九十])"
+# ★ 阿拉伯数字与中文数字都要认 —— 否则「八个工具」这类写法会成为盲区。
+# ★★ 中文数字必须允许多位（`+`）：否则「十一个模块」会被匹配成尾巴上的「一个模块」。
+_NUM = r"([0-9]+|[一二三四五六七八九十]+)"
 
 NUMBER_RULES = [
     (re.compile(_NUM + r"\s*个(?:可跑的)?模块"), "modules",
@@ -82,13 +83,22 @@ _CN_DIGITS = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5,
 
 
 def to_int(text):
-    """把捕获到的数字转成 int：认得阿拉伯数字，也认一~十。
+    """把捕获到的数字转成 int：阿拉伯数字，或中文数字（**支持十位以上**）。
 
     认不出返回 None（由调用方按 fail-closed 报「判不了」）。
     """
     text = (text or "").strip()
     if text.isdigit():
         return int(text)
+    if not text or any(ch not in _CN_DIGITS and ch != "十" for ch in text):
+        return None
+    if text == "十":
+        return 10
+    if "十" in text:                       # 十一 / 二十 / 三十五
+        a, _, b = text.partition("十")
+        tens = _CN_DIGITS.get(a, 1) if a else 1
+        ones = _CN_DIGITS.get(b, 0) if b else 0
+        return tens * 10 + ones
     return _CN_DIGITS.get(text)
 
 
@@ -365,6 +375,9 @@ def _selftest():
     eq("数字：阿拉伯", to_int("6"), 6)
     eq("数字：八", to_int("八"), 8)
     eq("数字：十", to_int("十"), 10)
+    eq("★ 数字：十一（多位中文，曾漏）", to_int("十一"), 11)
+    eq("数字：二十", to_int("二十"), 20)
+    eq("数字：三十五", to_int("三十五"), 35)
     eq("数字：认不出 ⇒ None（不冒充 0）", to_int("余"), None)
 
     with tempfile.TemporaryDirectory() as tmp:

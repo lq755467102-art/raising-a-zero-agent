@@ -595,12 +595,19 @@ zeroagent/
 ├── clonecheck.py      空白机器验证：把「克隆判据」变成一条命令（fail-closed）
 └── layerindex.py      层索引：按层自己的声明排序 / 路由 / 查冲突（fail-closed）
 skills/                脱敏后的方法论技能（来自一个真实项目的实践，去业务坐标 · 均已过泄露扫描）
+├── approval-chain/    申请审批链路（★ 提交可以开放，批准不能开放）
+├── bugfix-branch/     修复收集区（把"修好了"和"发出去了"拆成两件事）
+├── diag-log/          机群异常上报（让出问题的那台机器自己上报）
 ├── generality-guard/  通用化守则 + 改造后等价性验证（7 铁律 / 11 项自检 / 5 项验证）
 ├── memory-distill/    记忆蒸馏（两层注入上限实测 + 下沉三准则）
 ├── model-pitfalls/    模型陷阱画像（错误带"模型烙印"，跨模型传递）
 ├── multi-user-deploy/ 多机部署 + 分级授权 + 整库备份还原
+├── scheduled-task-rebuild/ 定时任务：快照刷新 · 跨机重建 · 回读校验（★ 任务默认不跟账号走）
 ├── script-perf/       自动化脚本性能（先量 → 再改 → 后验，数字全为实测）
-└── update-flow/       老机器更新编排（一次只给一步 · 含术语替换表）
+├── skill-distribution/ 技能投递与分发（打包 → 注册表 → 取用；★ 身份＝名字 + 内容哈希）
+├── system-health/     系统健康度一屏体检（六档状态：未启用 / 判不了 都必须显形）
+├── update-flow/       老机器更新编排（一次只给一步 · 含术语替换表）
+└── writing-for-humans/ 给人看的文字（先讲功能再带名字 · 别替读者下结论）
 
 tests/                 34 项单元测试
 examples/              9 个可跑示例

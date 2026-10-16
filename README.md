@@ -591,9 +591,11 @@ zeroagent/
 ├── contextbudget.py   上下文预算守卫（防静默截断）
 ├── approvalgate.py    审批闸门（防自批 + 幂等 + 审计）
 ├── checkpoint.py      幂等 + 断点续跑（输入指纹 + fail-closed）
+├── feedback.py        跨实例反馈：两个实例的判断是否一致（fail-closed）
 ├── doccheck.py        文档自检：死链 / 坏锚点 / 写死的数字过期（fail-closed）
 ├── clonecheck.py      空白机器验证：把「克隆判据」变成一条命令（fail-closed）
-└── layerindex.py      层索引：按层自己的声明排序 / 路由 / 查冲突（fail-closed）
+├── layerindex.py      层索引：按层自己的声明排序 / 路由 / 查冲突（fail-closed）
+└── leakcheck.py       发布前泄露扫描：真值藏在示例 / 路径里（fail-closed）
 skills/                脱敏后的方法论技能（来自一个真实项目的实践，去业务坐标 · 均已过泄露扫描）
 ├── approval-chain/    申请审批链路（★ 提交可以开放，批准不能开放）
 ├── bugfix-branch/     修复收集区（把"修好了"和"发出去了"拆成两件事）
@@ -613,6 +615,7 @@ tests/                 42 项单元测试
 examples/              9 个可跑示例
 docs/
 ├── zero-agent.md                ★ 0 号 AI（主线 · 主张）
+├── feedback-0th-agent.md        反馈：来自「0 号 AI 的一个实例」（当事者证词）
 ├── raising-an-agent.md          怎么从 0 带出一个「懂业务」的 agent（主线 · 流程）
 ├── human-agent-coevolution.md   人机共同进化（终局 · 设想）
 ├── system-design.md             系统设计总览
@@ -625,6 +628,7 @@ docs/
 ├── decision-symbiosis.md        ★ 无人全知时谁决定记忆去留（立场稿 · 明确标了未落地部分）
 ├── cognitive-drift.md           认知漂移：AI 的实现 vs 人的意图
 ├── orchestration.md             编排层：幂等 / 续跑 / 状态机
+├── toolchain.md                 工具编排：这 11 个工具什么时候该被叫起来
 ├── distribution-and-approval.md 分发 / 审批 / 定权（集群开发基建）
 ├── timeline.md                  工程时间线（12 个节点 + 学到了什么）
 ├── case-study.md                设计与踩坑（深度叙事）

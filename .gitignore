@@ -5,3 +5,6 @@ __pycache__/
 .lock
 *.lock
 .DS_Store
+
+# WorkBuddy 本机运行态（含本机路径与流程笔记）—— 本仓库是**公开**的，绝不入库
+.workbuddy/

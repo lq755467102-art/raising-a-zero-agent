@@ -479,7 +479,7 @@ python examples/checkgate_demo/run.py           # ⇒ 有阻塞项 ⇒ 不放行
 python examples/contextbudget_demo.py           # ⇒ 有文件超线
 python examples/approvalgate_demo.py            # 审批闸门（防自批）
 
-# 两个「守住文档自己」的检查（都不是示例，是能真拦的闸门）
+# 四个「守住仓库自己」的检查（都不是示例，是能真拦的闸门）
 python -m zeroagent.doccheck --root .           # 死链 / 坏锚点 / 写死的数字过期
 python -m zeroagent.clonecheck                  # 空白机器验证：只给代码、不给上下文
 python -m zeroagent.layerindex --root <tree 目录>   # 层索引：按层自己的声明排序与路由

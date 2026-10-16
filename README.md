@@ -468,7 +468,7 @@ AI 能做出很多东西，但只有懂业务的人能回答「**这是不是我
 ## 快速开始
 
 ```bash
-# 34 项单元测试
+# 42 项单元测试
 python -m unittest discover -s tests -v
 
 # 9 个可跑示例（带 ⇒ 的两个刻意以退出码 1 收尾，证明它真的会拦）
@@ -609,7 +609,7 @@ skills/                脱敏后的方法论技能（来自一个真实项目的
 ├── update-flow/       老机器更新编排（一次只给一步 · 含术语替换表）
 └── writing-for-humans/ 给人看的文字（先讲功能再带名字 · 别替读者下结论）
 
-tests/                 34 项单元测试
+tests/                 42 项单元测试
 examples/              9 个可跑示例
 docs/
 ├── zero-agent.md                ★ 0 号 AI（主线 · 主张）

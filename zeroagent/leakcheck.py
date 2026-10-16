@@ -67,7 +67,8 @@ def is_real_value(v):
 
 # 本机坐标的模式；命中后还要排除"占位符写法"
 PATTERNS = (
-    (re.compile(r"[A-Za-z]:[\\/]"), "本机盘符路径"),
+    # ★ 负向前瞻：前面不能是字母 —— 否则 `https://` 里的 `s:/` 会被当成盘符（实测踩到）
+    (re.compile(r"(?<![A-Za-z])[A-Za-z]:[\\/]"), "本机盘符路径"),
     (re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+"), "邮箱"),
     (re.compile(r"git@[\w.-]+:"), "远端地址"),
 )
@@ -298,6 +299,10 @@ def _selftest():
         # 坏场景 4：业务词
         write("dirty.md", "# 标题\n\n这个是某行业的专有名词\n")
         eq("业务词 ⇒ 报红", scan([work], vals, biz_words=["某行业的专有名词"]).ok, False)
+
+        # 坏场景 5：★ URL 不该被当成盘符（`https://` 里的 `s:/`）
+        write("dirty.md", "# 标题\n\n报错原文：could not read Username for 'https://x.com'\n")
+        eq("★ URL 不误报为盘符", scan([work], vals).ok, True)
 
         # 判不了 ⇒ 阻塞
         eq("配置目录不存在 ⇒ 判不了", scan([work], vals, unresolved="配置目录不存在").ok, False)

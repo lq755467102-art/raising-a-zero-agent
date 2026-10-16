@@ -1,4 +1,4 @@
-"""zeroagent —— 让自动化在无人值守下也不「静默出错」的六个小工具。
+"""zeroagent —— 让自动化在无人值守下也不「静默出错」的小工具。
 
 自动化最危险的失败**不是崩溃**，而是「没报错，但结果是错的」：
 
@@ -25,6 +25,8 @@ from .contextbudget import BudgetReport, Item, Reading, check as check_budget
 from .approvalgate import (APPROVED, PENDING, REJECTED, ApprovalError,
                            ApprovalStore, SelfApprovalError, UnknownRequest)
 from .checkpoint import Progress, run_steps, signature
+from .feedback import (AGREE, DISAGREE, UNCOMPARABLE, merge, read_events,
+                       reconcile, record, register_expectation)
 
 __all__ = [
     "Redactor", "ContextRule", "LeakError",
@@ -34,5 +36,7 @@ __all__ = [
     "ApprovalStore", "ApprovalError", "SelfApprovalError", "UnknownRequest",
     "PENDING", "APPROVED", "REJECTED",
     "Progress", "run_steps", "signature",
+    "record", "read_events", "merge", "reconcile", "register_expectation",
+    "AGREE", "DISAGREE", "UNCOMPARABLE",
 ]
-__version__ = "0.4.0"
+__version__ = "0.5.0"

@@ -20,6 +20,8 @@ from zeroagent.contextbudget import Item, check as check_budget
 from zeroagent.approvalgate import (ApprovalError, ApprovalStore,
                                      SelfApprovalError, UnknownRequest)
 from zeroagent.checkpoint import Progress, run_steps, signature
+from zeroagent.feedback import (AGREE, DISAGREE, UNCOMPARABLE, merge, read_events,
+                                reconcile, record, register_expectation)
 
 def _quiet(*_a, **_k):   # 静音 echo（Python 3.8 起可用；staticmethod 对象要到 3.10 才可调用）
     return None
@@ -311,6 +313,69 @@ class TestCheckpoint(unittest.TestCase):
     def test_signature_stability(self):
         self.assertEqual(signature("k", {"x": 1}), signature("k", {"x": 1}))
         self.assertNotEqual(signature("k", {"x": 1}), signature("k", {"x": 2}))
+
+
+class TestFeedback(unittest.TestCase):
+    """跨实例反馈：采集 / 回流 / 对账（★ fail-closed：判不了不许算通过）。"""
+
+    def setUp(self):
+        self._d = tempfile.mkdtemp(prefix="zfdbk-")
+
+    def test_rejects_missing_topic_or_basis(self):
+        # ★ fail-closed：无法归组 / 没有依据的条目，在写入时就拒绝
+        with self.assertRaises(ValueError):
+            record(topic="", judgment="x", basis="y", d=self._d)
+        with self.assertRaises(ValueError):
+            record(topic="t", judgment="x", basis="", d=self._d)
+
+    def test_two_instances_agree(self):
+        record("t", "开", "依据甲", d=self._d, instance="A")
+        record("t", "开", "依据乙", d=self._d, instance="B")
+        r = reconcile(self._d)
+        self.assertEqual(r["agree"], 1)
+        self.assertEqual(r["disagree"], 0)
+
+    def test_single_instance_is_uncomparable_not_agree(self):
+        # ★ 单方观点看起来"没分歧"，但那只是没有第二个人 ⇒ 必须判「判不了」
+        record("t", "是", "依据", d=self._d, instance="A")
+        r = reconcile(self._d)
+        self.assertEqual(r["uncomparable"], 1)
+        self.assertEqual(r["agree"], 0)
+
+    def test_disagreement_is_listed_not_resolved(self):
+        record("t", "是", "依据甲", d=self._d, instance="A")
+        record("t", "否", "依据乙", d=self._d, instance="B")
+        r = reconcile(self._d)
+        self.assertEqual(r["disagree"], 1)
+        views = r["topics"][0]["views"]
+        self.assertEqual({v["basis"] for v in views}, {"依据甲", "依据乙"})
+
+    def test_missing_basis_blocks_reconcile(self):
+        record("t", "是", "依据", d=self._d, instance="A")
+        with open(os.path.join(self._d, "events.jsonl"), "a", encoding="utf-8") as f:
+            f.write(json.dumps({"ts": "x", "instance": "B", "topic": "t",
+                                "judgment": "否", "basis": "", "outcome": ""}, ensure_ascii=False) + "\n")
+        r = reconcile(self._d)
+        self.assertEqual(r["uncomparable"], 1)
+        self.assertEqual(r["disagree"], 0)
+
+    def test_bad_line_becomes_problem_not_silence(self):
+        record("t", "j", "b", d=self._d, instance="A")
+        with open(os.path.join(self._d, "events.jsonl"), "a", encoding="utf-8") as f:
+            f.write("{坏行\n")
+        r = reconcile(self._d)
+        self.assertEqual(len(r["problems"]), 1)
+
+    def test_merge_is_idempotent(self):
+        src = tempfile.mkdtemp(prefix="zfdbk-src-")
+        record("t", "j", "b", d=src, instance="A")
+        m1 = merge([os.path.join(src, "events.jsonl")], d=self._d)
+        m2 = merge([os.path.join(src, "events.jsonl")], d=self._d)
+        self.assertEqual((m1["added"], m2["added"], m2["skipped"]), (1, 0, 1))
+
+    def test_register_expectation_carries_check_by(self):
+        e = register_expectation("某期待", "因为它可被证伪", "2026-11-01", d=self._d)
+        self.assertIn("checkBy=2026-11-01", e["outcome"])
 
 
 if __name__ == "__main__":

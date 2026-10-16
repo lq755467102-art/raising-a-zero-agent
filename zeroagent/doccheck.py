@@ -92,6 +92,13 @@ NUMBER_RULES = [
 #     一刀切必出误报 ⇒ 这个数**只能人工同步**（改 zeroagent/ 就要同步 README / costs / case-study）。
 #   - 「N 层」「N 类」：取决于分类口径，而层数口径本身在本仓库里就没统一。
 
+# ★ 序数 **不算** 数量声明：`第 N 个工具` 里的 N 是**排位**，不是「本仓库现有几个」。
+#   不排除它 ⇒ 工具会把「加第 9 个工具」读成「本仓库有 9 个工具」并**报假错**，
+#   逼内容把真实的历史排位改成当前总数（本仓库已因此被悄悄改坏两次：
+#   每次新增模块做「N → N+1」全量替换时，「第 N 个」都被顺手一起改了）。
+#   判据：数字**紧跟在「第」之后**（允许空格）⇒ 跳过。真声明从不长这样。
+_ORDINAL = re.compile(r"第\s*$")
+
 _CN_DIGITS = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5,
               "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
 
@@ -320,6 +327,8 @@ def check(root=".", md_files=None):
             # —— 数量声明 ——
             for pattern, key, desc in NUMBER_RULES:
                 for m in pattern.finditer(line):
+                    if _ORDINAL.search(line, 0, m.start()):
+                        continue           # 序数不是数量声明（见 _ORDINAL 的说明）
                     want = to_int(m.group(1))
                     got = _count(root, key)
                     if want is None:
@@ -464,6 +473,12 @@ def _selftest():
         open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(
             "# 标题\n\n它写着 99 个模块 <!-- doccheck-ignore -->\n")
         eq("带豁免标记的行被跳过", check(tmp).ok, True)
+
+        # ★ 序数（「第 N 个…」）不是数量声明 ⇒ 即使数字离谱也必须放行。
+        #   它是**排位**不是**计数**；误读会逼内容把历史排位改成当前总数（真被改坏过两次）。
+        open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(
+            "# 标题\n\n建议加第 99 个模块 / 第九十九篇文档 / 第 99 个小工具\n")
+        eq("序数（第 N 个…）不算数量声明 ⇒ 放行", check(tmp).ok, True)
 
         # 代码块里的假链接不该被扫出来（先重写成干净内容，免得上一轮残留干扰）
         open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(
